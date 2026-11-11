@@ -10,7 +10,7 @@ on:
 jobs:
   build-arm64-ipa:
     name: Compile Native ARM64 Mach-O & Package IPA
-    runs-on: macos-14
+    runs-on: macos-latest
 
     steps:
       - name: Checkout Code
