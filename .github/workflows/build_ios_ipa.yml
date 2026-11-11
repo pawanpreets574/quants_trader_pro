@@ -38,7 +38,7 @@ jobs:
 
       - name: Select Xcode Toolchain
         run: |
-          sudo xcode-select -switch /Applications/Xcode_15.4.app || sudo xcode-select -switch /Applications/Xcode.app
+          sudo xcode-select -switch /Applications/Xcode_15.4.app || sudo xcode-select -switch /Applications/Xcode.app || true
           xcodebuild -version
 
       - name: Build Native ARM64 iphoneos Archive (Unsigned)
@@ -46,17 +46,23 @@ jobs:
           mkdir -p build/artifacts
           mkdir -p build/Payload
 
-          # Detect active workspace and scheme dynamically
           WORKSPACE=$(find ios -name "*.xcworkspace" -maxdepth 1 | head -n 1)
-          echo "Detected Workspace: $WORKSPACE"
+          echo "Using Workspace: $WORKSPACE"
           
-          SCHEME=$(xcodebuild -list -workspace "$WORKSPACE" -json | python3 -c "import sys, json; schemes = json.load(sys.stdin).get('workspace', {}).get('schemes', []); print(schemes[0] if schemes else 'QuantTraderPro')")
-          echo "Detected Scheme: $SCHEME"
+          # List all schemes for verification
+          xcodebuild -list -workspace "$WORKSPACE"
+
+          # Target the primary App scheme explicitly
+          APP_SCHEME="QuantTraderPro"
+          if ! xcodebuild -list -workspace "$WORKSPACE" | grep -q "QuantTraderPro"; then
+            APP_SCHEME=$(xcodebuild -list -workspace "$WORKSPACE" | awk '/Schemes:/{flag=1;next}/^[[:space:]]*$/{flag=0}flag' | grep -v 'Pods-' | grep -v 'boost' | head -n 1 | xargs)
+          fi
+          echo "Selected App Scheme: $APP_SCHEME"
 
           # Compile real physical ARM64 Mach-O binary targeting physical iPhone/iPad
           xcodebuild archive \
             -workspace "$WORKSPACE" \
-            -scheme "$SCHEME" \
+            -scheme "$APP_SCHEME" \
             -configuration Release \
             -sdk iphoneos \
             -destination "generic/platform=iOS" \
@@ -66,9 +72,13 @@ jobs:
             CODE_SIGN_IDENTITY="" \
             AD_HOC_CODE_SIGNING_ALLOWED=YES
 
-          # Extract compiled .app bundle into standard IPA Payload
+          # Locate compiled .app inside xcarchive Products
           APP_PATH=$(find build/QuantTraderPro.xcarchive/Products/Applications -name "*.app" -maxdepth 1 | head -n 1)
+          if [ -z "$APP_PATH" ]; then
+            APP_PATH=$(find build/QuantTraderPro.xcarchive -name "*.app" | head -n 1)
+          fi
           echo "Found compiled app at: $APP_PATH"
+
           cp -r "$APP_PATH" build/Payload/
 
           # Package into final .ipa
