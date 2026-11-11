@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>QuantTrader Pro - Glassmorphism Edition</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-dark: #07090e;
+    --glass-surface: rgba(18, 24, 38, 0.65);
+    --glass-subtle: rgba(255, 255, 255, 0.05);
+    --glass-border: rgba(255, 255, 255, 0.12);
+    --glass-specular: rgba(255, 255, 255, 0.22);
+    --accent-cyan: #38bdf8;
+    --accent-emerald: #10b981;
+    --accent-amber: #f59e0b;
+    --accent-rose: #f43f5e;
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+  }
+  * {
+    box-sizing: border-box;
+    margin: 0; padding: 0;
+    font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    background-color: var(--bg-dark);
+    background-image: 
+      radial-gradient(circle at 15% 15%, rgba(56, 189, 248, 0.12) 0%, transparent 40%),
+      radial-gradient(circle at 85% 75%, rgba(139, 92, 246, 0.10) 0%, transparent 45%);
+    color: var(--text-primary);
+    min-height: 100vh;
+    padding: env(safe-area-inset-top, 16px) 16px env(safe-area-inset-bottom, 24px) 16px;
+  }
+  .mono { font-family: 'JetBrains Mono', monospace; }
+  
+  .glass-panel {
+    background: var(--glass-surface);
+    backdrop-filter: blur(28px) saturate(190%);
+    -webkit-backdrop-filter: blur(28px) saturate(190%);
+    border: 1px solid var(--glass-border);
+    border-radius: 24px;
+    box-shadow: 0 20px 40px -15px rgba(0,0,0,0.6), inset 0 1px 0 0 var(--glass-specular);
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+  .glass-card-subtle {
+    background: var(--glass-subtle);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 18px;
+    padding: 14px;
+  }
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .brand-badge {
+    width: 44px; height: 44px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; color: #020617; font-size: 18px;
+    box-shadow: 0 10px 20px -5px rgba(245, 158, 11, 0.4);
+  }
+  .metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  @media(min-width: 640px) {
+    .metrics-grid { grid-template-columns: repeat(4, 1fr); }
+  }
+  .metric-card {
+    background: var(--glass-surface);
+    backdrop-filter: blur(24px);
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    padding: 16px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  }
+  .metric-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .metric-val {
+    font-size: 24px;
+    font-weight: 800;
+    margin: 4px 0;
+  }
+  .mode-selector {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-top: 14px;
+  }
+  @media(min-width: 640px) {
+    .mode-selector { grid-template-columns: repeat(4, 1fr); }
+  }
+  .mode-btn {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    padding: 12px;
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: var(--text-secondary);
+  }
+  .mode-btn.active {
+    background: rgba(56, 189, 248, 0.15);
+    border-color: var(--accent-cyan);
+    color: var(--text-primary);
+    box-shadow: 0 10px 25px -5px rgba(56, 189, 248, 0.25);
+  }
+  .mode-btn h4 { font-size: 12px; font-weight: 800; color: var(--accent-cyan); }
+  .mode-btn p { font-size: 14px; font-weight: 700; margin-top: 2px; }
+  .mode-btn span { font-size: 10px; color: var(--text-secondary); display: block; margin-top: 4px; }
+
+  .guard-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  @media(min-width: 640px) {
+    .guard-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+  .guard-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 16px;
+    padding: 12px 14px;
+  }
+  .status-badge {
+    font-size: 10px;
+    font-weight: 800;
+    padding: 3px 8px;
+    border-radius: 6px;
+    background: rgba(16, 185, 129, 0.15);
+    color: var(--accent-emerald);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+  }
+  .btn-action {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: #020617;
+    font-weight: 800;
+    font-size: 12px;
+    border: none;
+    border-radius: 14px;
+    padding: 10px 18px;
+    cursor: pointer;
+    box-shadow: 0 10px 20px -5px rgba(16, 185, 129, 0.4);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+</style>
+</head>
+<body>
+  <div style="max-width: 800px; margin: 0 auto;">
+    <!-- HEADER -->
+    <div class="glass-panel header">
+      <div class="brand">
+        <div class="brand-badge">Au</div>
+        <div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <h2 style="font-weight: 800; font-size: 18px;" id="lbl-sym">XAUUSDb</h2>
+            <span class="status-badge">FROSTED GLASS</span>
+          </div>
+          <div style="font-size: 11px; color: var(--text-secondary); margin-top: 3px;">
+            HFMarkets-Live17 • Spread: $0.22 • Ping: 12ms
+          </div>
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 14px;">
+        <div style="text-align: right;">
+          <div style="font-size: 11px; color: var(--text-secondary);">Live Gold Bid</div>
+          <div class="mono metric-val" style="color: var(--accent-emerald); font-size: 22px; margin: 0;" id="bid-val">3,987.90</div>
+        </div>
+        <button class="btn-action" id="btn-toggle" onclick="toggleArm()">
+          <span style="width: 8px; height: 8px; border-radius: 50%; background: #020617;"></span>
+          <span id="txt-arm">ARMED</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- METRICS -->
+    <div class="metrics-grid">
+      <div class="metric-card">
+        <div class="metric-label">Balance</div>
+        <div class="metric-val mono">$72.95</div>
+        <div style="font-size: 11px; color: var(--accent-emerald); font-weight: 700;">+$7.10 Today</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Equity</div>
+        <div class="metric-val mono">$72.95</div>
+        <div style="font-size: 11px; color: var(--text-secondary);">Margin Free: $72.95</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Win Rate</div>
+        <div class="metric-val mono" style="color: var(--accent-emerald);">100%</div>
+        <div style="font-size: 11px; color: var(--text-secondary);">1 Deal Executed</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Target Profit</div>
+        <div class="metric-val mono" style="color: var(--accent-amber);" id="tp-display">+$14.00</div>
+        <div style="font-size: 11px; color: var(--text-secondary);">Hard Stop: -$30.00</div>
+      </div>
+    </div>
+
+    <!-- EXECUTION REGIME -->
+    <div class="glass-panel">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <h3 style="font-size: 14px; font-weight: 800; text-transform: uppercase;">Autonomous Regime Engine</h3>
+          <p style="font-size: 11px; color: var(--text-secondary); margin-top: 2px;">Dynamic ATR spacing, micro-layer scaling & breakeven floor</p>
+        </div>
+        <span class="status-badge" style="background: rgba(56, 189, 248, 0.15); color: var(--accent-cyan); border-color: rgba(56, 189, 248, 0.3);">MODEL 1 PRO</span>
+      </div>
+      
+      <div class="mode-selector">
+        <div class="mode-btn active" id="btn-m-agg" onclick="chooseMode('AGGRESSIVE')">
+          <h4>⚡ AGGRESSIVE</h4>
+          <p class="mono">Target +$14</p>
+          <span>ATR $1.85 • Scaled SL</span>
+        </div>
+        <div class="mode-btn" id="btn-m-norm" onclick="chooseMode('NORMAL')">
+          <h4 style="color: var(--accent-emerald);">🛡️ NORMAL</h4>
+          <p class="mono">Target +$7</p>
+          <span>ATR $1.50 • Standard SL</span>
+        </div>
+        <div class="mode-btn" id="btn-m-cons" onclick="chooseMode('CONSERVATIVE')">
+          <h4 style="color: var(--accent-amber);">🧘 CONSERVATIVE</h4>
+          <p class="mono">Target +$5</p>
+          <span>ATR $2.20 • -$15 Hard SL</span>
+        </div>
+        <div class="mode-btn" id="btn-m-stl" onclick="chooseMode('STEALTH')">
+          <h4 style="color: #c084fc;">👤 STEALTH</h4>
+          <p class="mono">Target +$10</p>
+          <span>Virtual Hidden TP/SL</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- GUARDS MATRIX -->
+    <div class="glass-panel">
+      <h3 style="font-size: 14px; font-weight: 800; text-transform: uppercase; margin-bottom: 12px;">Active Risk Shields (7/7 Armed)</h3>
+      <div class="guard-grid">
+        <div class="guard-item">
+          <div>
+            <div style="font-size: 12px; font-weight: 700;">🛡️ Strategy Alpha Dual-EMA</div>
+            <div style="font-size: 10px; color: var(--text-secondary); margin-top: 2px;">H1 EMA20 $4,018.59 vs EMA50 $4,039.03</div>
+          </div>
+          <span class="status-badge">ARMED</span>
+        </div>
+        <div class="guard-item">
+          <div>
+            <div style="font-size: 12px; font-weight: 700;">🛑 H1 & M15 Momentum Rejection</div>
+            <div style="font-size: 10px; color: var(--text-secondary); margin-top: 2px;">Prevents counter-trend knife catching</div>
+          </div>
+          <span class="status-badge">ARMED</span>
+        </div>
+        <div class="guard-item">
+          <div>
+            <div style="font-size: 12px; font-weight: 700;">⚡ High-Impact News Freeze</div>
+            <div style="font-size: 10px; color: var(--text-secondary); margin-top: 2px;">EIA & FOMC 30-min auto-freeze</div>
+          </div>
+          <span class="status-badge">ARMED</span>
+        </div>
+        <div class="guard-item">
+          <div>
+            <div style="font-size: 12px; font-weight: 700;">⏱️ Session Liquidity Buffer</div>
+            <div style="font-size: 10px; color: var(--text-secondary); margin-top: 2px;">London Open & NY Rollover shield</div>
+          </div>
+          <span class="status-badge">ARMED</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- BASKET STATUS & ACTION DOCK -->
+    <div class="glass-panel" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+      <div>
+        <div style="font-size: 13px; font-weight: 800;">Basket Monitor: <span style="color: var(--text-secondary);">Flat (0 Layers)</span></div>
+        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 2px;">Max 3 Layers • Dynamic ATR Step • Min 90s delay</div>
+      </div>
+      <div style="display: flex; gap: 10px;">
+        <button onclick="location.href='/liquid'" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); color: var(--text-primary); font-size: 11px; font-weight: 700; padding: 8px 14px; border-radius: 12px; cursor: pointer;">
+          View Liquid Glass ➔
+        </button>
+        <button onclick="alert('Close all triggered')" style="background: rgba(244, 63, 94, 0.15); border: 1px solid rgba(244, 63, 94, 0.3); color: var(--accent-rose); font-size: 11px; font-weight: 800; padding: 8px 14px; border-radius: 12px; cursor: pointer;">
+          🚨 Close All
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let isArmed = true;
+    function toggleArm() {
+      isArmed = !isArmed;
+      const btn = document.getElementById('btn-toggle');
+      const txt = document.getElementById('txt-arm');
+      if(isArmed) {
+        btn.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+        txt.innerText = 'ARMED';
+      } else {
+        btn.style.background = 'linear-gradient(135deg, #f43f5e, #be123c)';
+        txt.innerText = 'PAUSED';
+      }
+    }
+    function chooseMode(m) {
+      ['btn-m-agg', 'btn-m-norm', 'btn-m-cons', 'btn-m-stl'].forEach(id => {
+        document.getElementById(id).classList.remove('active');
+      });
+      const tp = document.getElementById('tp-display');
+      if(m === 'AGGRESSIVE') {
+        document.getElementById('btn-m-agg').classList.add('active');
+        tp.innerText = '+$14.00';
+      } else if(m === 'NORMAL') {
+        document.getElementById('btn-m-norm').classList.add('active');
+        tp.innerText = '+$7.00';
+      } else if(m === 'CONSERVATIVE') {
+        document.getElementById('btn-m-cons').classList.add('active');
+        tp.innerText = '+$5.00';
+      } else {
+        document.getElementById('btn-m-stl').classList.add('active');
+        tp.innerText = '+$10.00';
+      }
+    }
+    setInterval(() => {
+      const p = (3987.90 + (Math.random()*0.3 - 0.15)).toFixed(2);
+      document.getElementById('bid-val').innerText = p;
+    }, 1500);
+  </script>
+</body>
+</html>
