@@ -1,58 +1,85 @@
-name: Build iOS IPA (Cloud Mac Xcode)
+name: Build Native Physical iOS IPA (ARM64)
 
 on:
   push:
     branches: [ main, master ]
   pull_request:
     branches: [ main, master ]
-  workflow_dispatch: # Allows manual trigger from GitHub web UI
+  workflow_dispatch:
 
 jobs:
-  build-ios:
-    name: Compile iOS Application & Package IPA
-    runs-on: macos-latest
+  build-arm64-ipa:
+    name: Compile Native ARM64 Mach-O & Package IPA
+    runs-on: macos-14
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Set up Xcode Version
+      - name: Setup Node.js Environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install NPM Dependencies
         run: |
-          sudo xcode-select -switch /Applications/Xcode.app
+          npm ci || npm install
+
+      - name: Generate Native iOS Xcode Project (Expo Prebuild)
+        run: |
+          npx expo prebuild --platform ios --clean
+
+      - name: Install CocoaPods
+        run: |
+          cd ios
+          pod install --repo-update
+          cd ..
+
+      - name: Select Xcode Toolchain
+        run: |
+          sudo xcode-select -switch /Applications/Xcode_15.4.app || sudo xcode-select -switch /Applications/Xcode.app
           xcodebuild -version
 
-      - name: Build and Package Unsigned Development IPA
+      - name: Build Native ARM64 iphoneos Archive (Unsigned)
         run: |
           mkdir -p build/artifacts
-          echo "Starting xcodebuild cloud compilation..."
-          
-          # If Xcode project exists, compile via xcodebuild
-          if [ -d "*.xcodeproj" ] || [ -d "*.xcworkspace" ]; then
-            xcodebuild clean build \
-              -scheme "QuantTraderPro" \
-              -sdk iphoneos \
-              -configuration Release \
-              CODE_SIGNING_ALLOWED=NO \
-              CODE_SIGNING_REQUIRED=NO \
-              CODE_SIGN_IDENTITY="" \
-              CONFIGURATION_BUILD_DIR=build/Release-iphoneos
-            
-            # Package into standard .ipa payload
-            mkdir -p build/Payload
-            cp -r build/Release-iphoneos/*.app build/Payload/
-            cd build
-            zip -r artifacts/QuantTraderPro.ipa Payload
-            cd ..
-          else
-            echo "Mocking build structure or compiling native bundle..."
-            mkdir -p build/Payload
-            echo "QuantTraderPro iOS Binary" > build/Payload/QuantTraderPro.app
-            cd build && zip -r artifacts/QuantTraderPro.ipa Payload && cd ..
-          fi
+          mkdir -p build/Payload
 
-      - name: Upload Downloadable IPA Artifact
+          # Detect active workspace and scheme dynamically
+          WORKSPACE=$(find ios -name "*.xcworkspace" -maxdepth 1 | head -n 1)
+          echo "Detected Workspace: $WORKSPACE"
+          
+          SCHEME=$(xcodebuild -list -workspace "$WORKSPACE" -json | python3 -c "import sys, json; schemes = json.load(sys.stdin).get('workspace', {}).get('schemes', []); print(schemes[0] if schemes else 'QuantTraderPro')")
+          echo "Detected Scheme: $SCHEME"
+
+          # Compile real physical ARM64 Mach-O binary targeting physical iPhone/iPad
+          xcodebuild archive \
+            -workspace "$WORKSPACE" \
+            -scheme "$SCHEME" \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination "generic/platform=iOS" \
+            -archivePath build/QuantTraderPro.xcarchive \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            AD_HOC_CODE_SIGNING_ALLOWED=YES
+
+          # Extract compiled .app bundle into standard IPA Payload
+          APP_PATH=$(find build/QuantTraderPro.xcarchive/Products/Applications -name "*.app" -maxdepth 1 | head -n 1)
+          echo "Found compiled app at: $APP_PATH"
+          cp -r "$APP_PATH" build/Payload/
+
+          # Package into final .ipa
+          cd build
+          zip -r -9 artifacts/QuantTraderPro.ipa Payload
+          ls -lh artifacts/QuantTraderPro.ipa
+          cd ..
+
+      - name: Upload Real ARM64 IPA Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: QuantTraderPro-iOS-IPA
+          name: QuantTraderPro-ARM64-Physical-IPA
           path: build/artifacts/*.ipa
           retention-days: 14
