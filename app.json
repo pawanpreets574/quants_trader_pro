@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Quant Trader Pro",
-    "slug": "quant-trader-pro",
+    "slug": "pps",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -12,6 +12,11 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.quanttrader.pro"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "2cfdaf2c-08be-4ef9-9fa8-c42cb64c2bae"
+      }
     }
   }
 }

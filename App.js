@@ -1,145 +1,24 @@
-import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Switch, SafeAreaView, StatusBar, Dimensions } from 'react-native';
+import React from 'react';
+import { StyleSheet, SafeAreaView, StatusBar, Platform, View } from 'react-native';
+import { WebView } from 'react-native-webview';
 
-const { width } = Dimensions.get('window');
+const HTML_CONTENT = "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n  <meta charset=\"UTF-8\">\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no\">\n  <title>Quant Trader Zen - Centered Chart & Bottom AI Suite</title>\n  <script src=\"https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js\"></script>\n  <style>\n    .glass-surface {\n      background: rgba(18, 18, 22, 0.88);\n      backdrop-filter: blur(28px);\n      -webkit-backdrop-filter: blur(28px);\n      border: 1px solid rgba(255, 255, 255, 0.12);\n    }\n    .glass-pill {\n      background: rgba(255, 255, 255, 0.08);\n      backdrop-filter: blur(16px);\n      -webkit-backdrop-filter: blur(16px);\n      border: 1px solid rgba(255, 255, 255, 0.15);\n    }\n    .island-pill {\n      box-shadow: 0 0 25px rgba(0, 0, 0, 0.95), 0 0 2px rgba(255, 255, 255, 0.25);\n    }\n    .bot-glow-on {\n      box-shadow: 0 0 30px rgba(16, 185, 129, 0.5), inset 0 0 15px rgba(16, 185, 129, 0.25);\n    }\n    .bot-glow-off {\n      box-shadow: 0 0 30px rgba(239, 68, 68, 0.5), inset 0 0 15px rgba(239, 68, 68, 0.25);\n    }\n    canvas { touch-action: none; }\n    ::-webkit-scrollbar { display: none; }\n  </style>\n</head>\n<body class=\"bg-transparent text-[var(--foreground)] antialiased p-2 sm:p-4 flex flex-col items-center justify-center min-h-screen\">\n\n  <!-- TOP HEADER & CONTROLS -->\n  <div class=\"w-full max-w-4xl mb-3 bg-[var(--card)] p-3.5 rounded-2xl border border-[var(--border)] shadow-xl flex flex-col md:flex-row items-center justify-between gap-3\">\n    <div class=\"flex items-center gap-2.5\">\n      <div id=\"header-pulse\" class=\"w-3.5 h-3.5 rounded-full bg-cyan-400 animate-ping\"></div>\n      <div>\n        <h2 class=\"text-sm font-black text-[var(--foreground)] tracking-wide flex items-center gap-1.5\">\n          <span>QUANT TRADER ZEN</span>\n          <span class=\"px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 text-[9px] font-extrabold uppercase border border-blue-500/30\">CENTERED CHART EDITION</span>\n        </h2>\n        <p class=\"text-[11px] text-[var(--muted-foreground)]\">Candlestick chart centered with full canvas view \u2022 AI Pulse Radar &amp; Master Switch at bottom.</p>\n      </div>\n    </div>\n\n    <!-- UI View Switcher -->\n    <div class=\"flex flex-wrap items-center bg-black/60 p-1 rounded-xl border border-neutral-800 gap-1 text-xs\">\n      <button onclick=\"switchScreen('chart')\" id=\"btn-chart\" class=\"screen-btn px-3 py-1.5 font-bold rounded-lg bg-blue-600 text-white shadow\">\n        \ud83d\udcc8 Centered Chart\n      </button>\n      <button onclick=\"switchScreen('telemetry')\" id=\"btn-telemetry\" class=\"screen-btn px-3 py-1.5 font-bold rounded-lg text-neutral-400 hover:text-white\">\n        \ud83e\udde0 AI Brain\n      </button>\n      <button onclick=\"switchScreen('logs')\" id=\"btn-logs\" class=\"screen-btn px-3 py-1.5 font-bold rounded-lg text-neutral-400 hover:text-white\">\n        \ud83d\udcdf Audit Terminal\n      </button>\n      <button onclick=\"switchScreen('filters')\" id=\"btn-filters\" class=\"screen-btn px-3 py-1.5 font-bold rounded-lg text-neutral-400 hover:text-white\">\n        \ud83d\udee1\ufe0f 14 Filters\n      </button>\n    </div>\n  </div>\n\n  <!-- IPHONE 16 PRO MAX CHASSIS (380px x 840px) -->\n  <div class=\"relative w-[370px] sm:w-[390px] h-[840px] bg-black rounded-[54px] p-3 shadow-2xl border-4 border-neutral-700 ring-1 ring-white/10 flex flex-col select-none overflow-hidden\">\n    \n    <!-- iPhone Top Speaker Bezel -->\n    <div class=\"absolute top-2 left-1/2 -translate-x-1/2 w-14 h-1 bg-neutral-800 rounded-full z-50\"></div>\n\n    <!-- INNER RETINA OLED SCREEN -->\n    <div class=\"relative w-full h-full bg-[#08080a] rounded-[44px] overflow-hidden flex flex-col border border-neutral-800\">\n      \n      <!-- TOP STATUS BAR WITH DYNAMIC ISLAND -->\n      <div class=\"relative z-40 w-full px-6 pt-3 pb-1 flex justify-between items-center text-xs font-semibold text-white\">\n        <span id=\"phone-clock\">9:41</span>\n        \n        <!-- Live Dynamic Island Capsule -->\n        <div id=\"dynamic-island\" onclick=\"toggleIsland()\" class=\"island-pill absolute left-1/2 -translate-x-1/2 top-2 bg-black rounded-full px-3 py-1 cursor-pointer transition-all duration-300 flex items-center justify-between gap-2 border border-white/15 w-[130px] h-[30px] hover:border-cyan-400/50\">\n          <div class=\"flex items-center gap-1.5 overflow-hidden\">\n            <span id=\"island-led\" class=\"w-2 h-2 rounded-full bg-cyan-400 animate-pulse\"></span>\n            <span id=\"island-caption\" class=\"text-[11px] font-bold text-cyan-300 tracking-tight\">ZEN \u2022 ACTIVE</span>\n          </div>\n          <span class=\"text-[8px] px-1 py-0.5 rounded bg-cyan-500/20 text-cyan-300 font-extrabold\" id=\"island-badge\">AI LIVE</span>\n        </div>\n\n        <div class=\"flex items-center gap-1.5 text-[11px]\">\n          <span>5G</span>\n          <div class=\"w-5 h-2.5 border border-white/80 rounded-sm p-0.5 flex items-center\">\n            <div class=\"h-full w-full bg-white rounded-xs\"></div>\n          </div>\n        </div>\n      </div>\n\n      <!-- MAIN APP HEADER -->\n      <div class=\"px-4 py-2 bg-neutral-950/90 border-b border-neutral-900 flex justify-between items-center\">\n        <div>\n          <div class=\"flex items-center gap-1.5\">\n            <span class=\"text-sm font-black text-white\">XAUUSD</span>\n            <span class=\"text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 font-bold\">GOLD</span>\n            <span class=\"text-[10px] px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300 font-extrabold\">AUTO HEALING</span>\n          </div>\n          <p class=\"text-[10px] text-neutral-400\">Balance: <span class=\"text-white font-extrabold\" id=\"app-equity\">$66.05</span> \u2022 Float: <span class=\"font-extrabold text-emerald-400\" id=\"app-float-head\">+$0.00</span></p>\n        </div>\n        <div class=\"text-right\">\n          <span class=\"text-base font-black text-emerald-400\" id=\"app-live-price\">4046.20</span>\n          <div class=\"text-[9px] text-neutral-400 flex items-center justify-end gap-1\">\n            <span>Spr: <b class=\"text-white\">0.08</b></span>\n            <span class=\"text-emerald-400 font-bold\">\u25b2 +0.37%</span>\n          </div>\n        </div>\n      </div>\n\n      <!-- ========================================================================= -->\n      <!-- VIEW 1: CENTERED CANDLESTICK CHART & BOTTOM AI PULSE STATION -->\n      <!-- ========================================================================= -->\n      <div id=\"view-chart\" class=\"screen-view flex-1 flex flex-col overflow-hidden relative\">\n        \n        <!-- 1. PERMANENT TOP INDICATORS STRIP (Zero Overlap, Locked Visibility) -->\n        <div class=\"px-3 py-1.5 bg-neutral-950 border-b border-neutral-900 flex items-center justify-between gap-1 text-[9px] font-black z-20\">\n          <div class=\"flex items-center gap-1.5 bg-neutral-900/80 px-2 py-1 rounded-lg border border-red-500/20\">\n            <span class=\"w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse\"></span>\n            <span class=\"text-neutral-400\">Pool Ceil:</span>\n            <span class=\"text-red-400 font-mono font-bold\">$4,048.50</span>\n          </div>\n\n          <div class=\"flex items-center gap-1.5 bg-purple-500/10 px-2 py-1 rounded-lg border border-purple-500/30\">\n            <span class=\"w-1.5 h-1.5 rounded-full bg-purple-400\"></span>\n            <span class=\"text-neutral-300\">Tol Zone:</span>\n            <span class=\"text-purple-300 font-bold\">$1.25 ARMED</span>\n          </div>\n\n          <div class=\"flex items-center gap-1.5 bg-emerald-500/10 px-2 py-1 rounded-lg border border-emerald-500/30\">\n            <span class=\"w-1.5 h-1.5 rounded-full bg-emerald-400\"></span>\n            <span class=\"text-neutral-300\">M15 Force:</span>\n            <span class=\"text-emerald-400 font-bold\">\u21d7 +18\u00b0 BULL</span>\n          </div>\n        </div>\n\n        <!-- 2. TIMEFRAME SELECTOR ROW + INBUILT / TRADINGVIEW SWITCH -->\n        <div class=\"px-3 py-1 bg-neutral-950/90 border-b border-neutral-900 flex items-center justify-between z-20\">\n          <div class=\"flex items-center gap-1.5\">\n            <span class=\"text-[9px] text-neutral-400 font-bold uppercase tracking-wider\">TF:</span>\n            <div class=\"flex items-center gap-1 bg-black/60 p-0.5 rounded-lg border border-white/5\">\n              <button onclick=\"setTimeframe('1m')\" id=\"tf-1m\" class=\"tf-btn px-2.5 py-0.5 rounded text-[10px] bg-cyan-600 text-white font-black\">1m</button>\n              <button onclick=\"setTimeframe('5m')\" id=\"tf-5m\" class=\"tf-btn px-2.5 py-0.5 rounded text-[10px] text-neutral-400 hover:text-white font-bold\">5m</button>\n              <button onclick=\"setTimeframe('15m')\" id=\"tf-15m\" class=\"tf-btn px-2.5 py-0.5 rounded text-[10px] text-neutral-400 hover:text-white font-bold\">15m</button>\n              <button onclick=\"setTimeframe('1h')\" id=\"tf-1h\" class=\"tf-btn px-2.5 py-0.5 rounded text-[10px] text-neutral-400 hover:text-white font-bold\">1h</button>\n            </div>\n          </div>\n          \n          <!-- CHART SOURCE SWITCH: INBUILT VS TRADINGVIEW -->\n          <div class=\"flex items-center gap-1 bg-neutral-900/90 p-0.5 rounded-lg border border-white/10 shadow-inner\">\n            <button id=\"btn-chart-native\" onclick=\"switchChartEngine('native')\" class=\"px-2 py-0.5 rounded text-[9px] font-black bg-cyan-600 text-white shadow-sm flex items-center gap-1 transition-all\">\n              <span>\u26a1</span><span>Inbuilt</span>\n            </button>\n            <button id=\"btn-chart-tv\" onclick=\"switchChartEngine('tv')\" class=\"px-2 py-0.5 rounded text-[9px] font-bold text-neutral-400 hover:text-white flex items-center gap-1 transition-all\">\n              <span>\ud83d\udcc8</span><span>TradingView</span>\n            </button>\n          </div>\n        </div>\n\n        <!-- 3. DEDICATED LANDSCAPE DRAWING TOOLBAR (NEXT LINE) -->\n        <div class=\"px-3 py-1.5 bg-neutral-900/95 backdrop-blur-md border-b border-neutral-800 flex items-center justify-between gap-1 z-20 shadow-md\">\n          <div class=\"flex items-center gap-1 text-[9px] text-neutral-400 font-bold uppercase tracking-wider\">\n            <span id=\"tool-banner-title\">TOOLS:</span>\n          </div>\n          <div class=\"flex items-center gap-1.5 flex-1 justify-end\">\n            <button onclick=\"setTool('cursor')\" id=\"tool-cursor\" title=\"Cursor Mode\" class=\"tool-btn px-2.5 py-1 rounded-lg text-[10px] flex items-center gap-1.5 bg-cyan-500 text-white font-bold shadow-sm transition-colors\">\n              <span>\u2629</span><span>Select</span>\n            </button>\n            <button onclick=\"setTool('trendline')\" id=\"tool-trendline\" title=\"Draw Trendline\" class=\"tool-btn px-2.5 py-1 rounded-lg text-[10px] flex items-center gap-1.5 bg-neutral-800/80 text-neutral-300 hover:bg-neutral-800 font-bold border border-white/5 transition-colors\">\n              <span>\u2571</span><span>Trendline</span>\n            </button>\n            <button onclick=\"setTool('horizontal')\" id=\"tool-horizontal\" title=\"Draw Level\" class=\"tool-btn px-2.5 py-1 rounded-lg text-[10px] flex items-center gap-1.5 bg-neutral-800/80 text-neutral-300 hover:bg-neutral-800 font-bold border border-white/5 transition-colors\">\n              <span>\u2500</span><span>Level</span>\n            </button>\n            <button onclick=\"setTool('rays')\" id=\"tool-rays\" title=\"TP/SL Rays\" class=\"tool-btn px-2.5 py-1 rounded-lg text-[10px] flex items-center gap-1.5 bg-neutral-800/80 text-neutral-300 hover:bg-neutral-800 font-bold border border-white/5 transition-colors\">\n              <span>\ud83c\udfaf</span><span>TP/SL</span>\n            </button>\n            <button onclick=\"clearDrawings()\" title=\"Clear Canvas\" class=\"px-2 py-1 rounded-lg text-[10px] flex items-center gap-1 bg-red-500/10 text-red-400 hover:bg-red-500/20 font-bold border border-red-500/20 transition-colors\">\n              <span>\ud83d\uddd1\ufe0f</span><span>Clear</span>\n            </button>\n          </div>\n        </div>\n\n        <!-- 4. CENTERED CHART CANVAS OR TRADINGVIEW (Unobstructed Middle View) -->\n        <div class=\"relative flex-1 bg-[#050507] overflow-hidden flex items-center justify-center\">\n          <!-- Inbuilt Candlestick Canvas -->\n          <div id=\"native-chart-view\" class=\"w-full h-full relative\">\n            <canvas id=\"tradingCanvas\" class=\"w-full h-full cursor-crosshair\"></canvas>\n          </div>\n          <!-- TradingView Live Interactive Chart -->\n          <div id=\"tv-chart-view\" class=\"w-full h-full relative hidden\">\n            <iframe id=\"tv-iframe\" src=\"https://s.tradingview.com/widgetembed/?frameElementId=tradingview_widget&symbol=FX_IDC%3AXAUUSD&interval=1&hidesidetoolbar=0&symboledit=1&saveimage=1&toolbarbg=050507&theme=dark&style=1&timezone=Etc%2FUTC\" class=\"w-full h-full border-0\"></iframe>\n          </div>\n        </div>\n\n        <!-- ===================================================================== -->\n        <!-- BOTTOM STATION: REPOSITIONED AI PULSE RADAR + MASTER BOT SWITCH -->\n        <!-- Placed right at the bottom exactly as requested! -->\n        <!-- ===================================================================== -->\n        <div class=\"p-2.5 bg-neutral-950/95 backdrop-blur-2xl border-t border-neutral-900 flex flex-col gap-2 z-30 shadow-2xl\">\n          \n          <!-- 1. THE AI PULSE RADAR & LIVE ORDER FLOW CARD (Moved to bottom!) -->\n          <div class=\"glass-surface p-2.5 rounded-2xl border border-white/10 flex flex-col gap-1.5 shadow-lg\">\n            <div class=\"flex justify-between items-center text-[10px] font-bold\">\n              <span class=\"text-neutral-300 flex items-center gap-1.5\">\n                <span class=\"w-2 h-2 rounded-full bg-cyan-400 animate-ping\"></span>\n                <span>AI Pulse Radar: Order Flow</span>\n              </span>\n              <span class=\"text-cyan-300 font-mono\">142 ticks/min</span>\n            </div>\n\n            <!-- Buyer vs Seller Pressure Meter -->\n            <div class=\"space-y-0.5\">\n              <div class=\"flex justify-between text-[9px] font-black\">\n                <span class=\"text-emerald-400\">BUYERS 58%</span>\n                <span class=\"text-neutral-400\">Range: $1.40</span>\n                <span class=\"text-red-400\">42% SELLERS</span>\n              </div>\n              <div class=\"w-full h-1.5 bg-neutral-900 rounded-full overflow-hidden flex\">\n                <div class=\"h-full bg-gradient-to-r from-emerald-500 to-teal-400\" style=\"width: 58%\"></div>\n                <div class=\"h-full bg-gradient-to-r from-rose-500 to-red-600\" style=\"width: 42%\"></div>\n              </div>\n            </div>\n\n            <!-- Live Bot Monologue Feed -->\n            <p class=\"text-[9.5px] text-neutral-300 font-mono leading-tight bg-black/50 p-1.5 rounded-xl border border-white/5\">\n              \"Testing 4047 resistance. Prior M15 +$2.63 green. SELL blocked by M15 guard until shooting star forms.\"\n            </p>\n          </div>\n\n          <!-- 2. MASTER BOT EXECUTION BUTTON (PROMINENT START/PAUSE) -->\n          <button onclick=\"toggleBotEngine()\" id=\"master-bot-btn\" class=\"w-full py-3 px-4 rounded-2xl font-black text-xs flex items-center justify-between transition-all duration-300 bot-glow-on bg-gradient-to-r from-emerald-600 via-teal-500 to-emerald-600 text-white active:scale-98 shadow-2xl border border-white/20\">\n            <div class=\"flex items-center gap-2.5\">\n              <span id=\"bot-status-dot\" class=\"w-3 h-3 rounded-full bg-white animate-ping\"></span>\n              <div class=\"text-left\">\n                <div class=\"text-xs font-black tracking-wide\" id=\"master-btn-title\">BOT ACTIVE &amp; RUNNING</div>\n                <div class=\"text-[9px] text-emerald-100 font-medium\" id=\"master-btn-sub\">M15 Guard &amp; $1.25 Tolerance Zone Armed</div>\n              </div>\n            </div>\n            <div class=\"px-2.5 py-1 rounded-xl bg-black/40 border border-white/20 text-[10px] font-extrabold uppercase tracking-tight\" id=\"master-btn-badge\">\n              TAP TO PAUSE\n            </div>\n          </button>\n\n          <!-- 3. SECONDARY CONTROLS (Emergency Flatten & View Audit Logs) -->\n          <div class=\"flex items-center gap-2\">\n            <button onclick=\"executeFlatten()\" class=\"flex-1 py-1.5 px-3 bg-neutral-900 border border-red-500/40 text-red-400 font-bold rounded-xl text-[10px] active:scale-95 transition-all flex items-center justify-center gap-1.5\">\n              <span>\ud83d\udea8</span>\n              <span>EMERGENCY FLATTEN</span>\n            </button>\n\n            <button onclick=\"switchScreen('logs')\" class=\"flex-1 py-1.5 px-3 bg-neutral-900 border border-neutral-700 text-cyan-300 font-bold rounded-xl text-[10px] active:scale-95 transition-all flex items-center justify-center gap-1.5\">\n              <span>\ud83d\udcdf</span>\n              <span>COMMAND LOGS</span>\n            </button>\n          </div>\n\n        </div>\n\n      </div>\n\n      <!-- ========================================================================= -->\n      <!-- VIEW 2: AI BRAIN, TELEMETRY & ONGOING CANDLE ANATOMY -->\n      <!-- ========================================================================= -->\n      <div id=\"view-telemetry\" class=\"screen-view hidden flex-1 overflow-y-auto px-4 py-3 flex flex-col gap-3\">\n        \n        <div class=\"flex justify-between items-center pt-1\">\n          <div>\n            <h1 class=\"text-base font-extrabold text-white\">AI Brain &amp; Telemetry</h1>\n            <p class=\"text-[10px] text-neutral-400\">Live Decision Logic &amp; Forming Candle Anatomy</p>\n          </div>\n          <span class=\"text-[10px] px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 font-bold border border-cyan-500/30\">\n            RADAR ONLINE\n          </span>\n        </div>\n\n        <!-- Real-Time Decision Radar -->\n        <div class=\"glass-surface p-3.5 rounded-3xl border border-white/10 flex flex-col gap-2\">\n          <div class=\"flex justify-between items-center\">\n            <span class=\"text-xs font-bold text-white flex items-center gap-1.5\">\n              <span class=\"w-2.5 h-2.5 rounded-full bg-cyan-400 animate-ping\"></span>\n              Real-Time Bot Decision Radar\n            </span>\n            <span class=\"text-[9px] px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 font-bold\">M1 &amp; M15 SYNC</span>\n          </div>\n\n          <div class=\"bg-black/60 p-3 rounded-2xl border border-white/5 space-y-1.5\">\n            <p class=\"text-[11px] text-neutral-300 leading-relaxed font-mono\" id=\"telemetry-thought\">\n              \"Analyzing live M1 bar. Price is rejecting Ceiling at $4046.80 with 46% upper wick. M15 Guard active: Prior M15 candle closed +$2.63 Bullish without shooting star exhaustion \u2014 BLOCKED SELL. Standing by for clean rejection confirmation.\"\n            </p>\n            <div class=\"flex items-center justify-between text-[10px] pt-1 border-t border-neutral-800\">\n              <span class=\"text-neutral-500\">Current Action Verdict:</span>\n              <span class=\"text-amber-400 font-black\" id=\"telemetry-verdict\">SHIELDED (WAITING EXHAUSTION)</span>\n            </div>\n          </div>\n        </div>\n\n        <!-- Forming Candle Anatomy -->\n        <div class=\"glass-surface p-3.5 rounded-3xl border border-white/10 flex flex-col gap-2.5\">\n          <div class=\"flex justify-between items-center\">\n            <div class=\"flex items-center gap-1.5\">\n              <span class=\"text-xs font-bold text-white\">Active Candle Anatomy</span>\n              <span class=\"text-[9px] px-1.5 py-0.5 rounded bg-neutral-800 text-neutral-300 font-bold\">M1 BAR</span>\n            </div>\n            <div class=\"flex items-center gap-1 text-[10px] text-cyan-400 font-bold bg-cyan-950/60 px-2 py-0.5 rounded-lg border border-cyan-500/30\">\n              <span>\u23f3</span>\n              <span id=\"candle-countdown\">00:22 remaining</span>\n            </div>\n          </div>\n\n          <!-- Candle Breakdown -->\n          <div class=\"grid grid-cols-3 gap-2 bg-black/50 p-2.5 rounded-2xl border border-white/5 text-[10px]\">\n            <div class=\"text-center p-1.5 bg-neutral-900/80 rounded-xl\">\n              <span class=\"text-neutral-500 block font-bold\">UPPER WICK</span>\n              <span class=\"text-emerald-400 font-black text-xs\">48% Rejection</span>\n              <span class=\"text-[8px] text-neutral-400 block\">Ceiling Push</span>\n            </div>\n            <div class=\"text-center p-1.5 bg-neutral-900/80 rounded-xl\">\n              <span class=\"text-neutral-500 block font-bold\">BODY RANGE</span>\n              <span class=\"text-white font-black text-xs\">$1.40 Range</span>\n              <span class=\"text-[8px] text-emerald-400 block\">Bullish Green</span>\n            </div>\n            <div class=\"text-center p-1.5 bg-neutral-900/80 rounded-xl\">\n              <span class=\"text-neutral-500 block font-bold\">LOWER WICK</span>\n              <span class=\"text-neutral-300 font-black text-xs\">12% Base</span>\n              <span class=\"text-[8px] text-neutral-400 block\">Floor Touch</span>\n            </div>\n          </div>\n        </div>\n\n        <!-- Telemetry Metrics -->\n        <div class=\"glass-surface p-3.5 rounded-3xl border border-white/10 flex flex-col gap-2\">\n          <span class=\"text-xs font-bold text-white flex items-center gap-1.5\">\n            <span>\ud83d\udce1</span> Market Telemetry Vitals\n          </span>\n\n          <div class=\"grid grid-cols-2 gap-2 text-xs\">\n            <div class=\"bg-black/50 p-2.5 rounded-2xl border border-white/5\">\n              <span class=\"text-[10px] text-neutral-400 uppercase font-bold\">Tick Velocity</span>\n              <p class=\"text-sm font-black text-white\">142 ticks/min</p>\n              <span class=\"text-[9px] text-emerald-400\">High Liquidity</span>\n            </div>\n            <div class=\"bg-black/50 p-2.5 rounded-2xl border border-white/5\">\n              <span class=\"text-[10px] text-neutral-400 uppercase font-bold\">Real Spread</span>\n              <p class=\"text-sm font-black text-emerald-400\">0.08 ($0.80)</p>\n              <span class=\"text-[9px] text-neutral-400\">Raw Zero Spread</span>\n            </div>\n          </div>\n        </div>\n\n      </div>\n\n      <!-- ========================================================================= -->\n      <!-- VIEW 3: DEDICATED AI COMMAND TERMINAL & AUDIT LOG -->\n      <!-- ========================================================================= -->\n      <div id=\"view-logs\" class=\"screen-view hidden flex-1 overflow-y-auto px-3.5 py-3 flex flex-col gap-2.5\">\n        \n        <div class=\"flex justify-between items-center pt-1\">\n          <div>\n            <h1 class=\"text-base font-extrabold text-white flex items-center gap-1.5\">\n              <span>\ud83d\udcdf</span> AI Command Terminal\n            </h1>\n            <p class=\"text-[10px] text-neutral-400\">Second-by-second market thinking &amp; guard block audit</p>\n          </div>\n          <span class=\"text-[9px] px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 font-extrabold border border-cyan-500/30\">\n            STREAMING\n          </span>\n        </div>\n\n        <!-- Filter Chips for Logs -->\n        <div class=\"flex gap-1 overflow-x-auto pb-1 text-[10px] font-bold\">\n          <button onclick=\"filterLogs('all')\" id=\"log-filter-all\" class=\"px-2.5 py-1 rounded-lg bg-blue-600 text-white shadow\">All Events</button>\n          <button onclick=\"filterLogs('blocked')\" id=\"log-filter-blocked\" class=\"px-2.5 py-1 rounded-lg bg-neutral-800 text-neutral-400 hover:text-white\">\ud83d\uded1 Guard Blocks</button>\n          <button onclick=\"filterLogs('punched')\" id=\"log-filter-punched\" class=\"px-2.5 py-1 rounded-lg bg-neutral-800 text-neutral-400 hover:text-white\">\u26a1 Orders</button>\n          <button onclick=\"filterLogs('thinking')\" id=\"log-filter-thinking\" class=\"px-2.5 py-1 rounded-lg bg-neutral-800 text-neutral-400 hover:text-white\">\ud83e\udde0 Thoughts</button>\n        </div>\n\n        <!-- Live Terminal Stream Feed -->\n        <div class=\"flex-1 space-y-2 overflow-y-auto pr-0.5\">\n          <div class=\"log-card log-type-blocked bg-neutral-900/90 border border-red-500/30 p-2.5 rounded-2xl flex flex-col gap-1 cursor-pointer hover:border-red-400\" onclick=\"showLogDetail('M15_GUARD_BLOCK')\">\n            <div class=\"flex justify-between items-center text-[10px]\">\n              <span class=\"text-red-400 font-black flex items-center gap-1\">\n                <span>\ud83d\uded1</span> BLOCKED SELL: M15 GUARD\n              </span>\n              <span class=\"text-neutral-500 font-mono\">05:34:12 UTC</span>\n            </div>\n            <p class=\"text-[11px] text-neutral-200 font-mono leading-tight\">\n              Prior M15 bar gained +$2.63 Bullish. No shooting star upper wick. Blind counter-trend short blocked.\n            </p>\n            <div class=\"flex justify-between items-center text-[9px] text-neutral-400 pt-1 border-t border-neutral-800\">\n              <span>Guard: <b>M15 Momentum Guard</b></span>\n              <span class=\"text-cyan-400 underline\">Forensic Details &rarr;</span>\n            </div>\n          </div>\n\n          <div class=\"log-card log-type-blocked bg-neutral-900/90 border border-purple-500/30 p-2.5 rounded-2xl flex flex-col gap-1 cursor-pointer hover:border-purple-400\" onclick=\"showLogDetail('SESSION_BUFFER')\">\n            <div class=\"flex justify-between items-center text-[10px]\">\n              <span class=\"text-purple-400 font-black flex items-center gap-1\">\n                <span>\ud83d\udee1\ufe0f</span> SESSION BUFFER ACTIVE\n              </span>\n              <span class=\"text-neutral-500 font-mono\">05:00:00 UTC</span>\n            </div>\n            <p class=\"text-[11px] text-neutral-200 font-mono leading-tight\">\n              London Pre-Open Window (05:00-06:00 UTC). All incoming entry orders paused to avoid liquidity spike.\n            </p>\n            <div class=\"flex justify-between items-center text-[9px] text-neutral-400 pt-1 border-t border-neutral-800\">\n              <span>Filter: <b>Institutional Rollover Buffer</b></span>\n              <span class=\"text-cyan-400 underline\">Forensic Details &rarr;</span>\n            </div>\n          </div>\n\n          <div class=\"log-card log-type-punched bg-neutral-900/90 border border-emerald-500/30 p-2.5 rounded-2xl flex flex-col gap-1 cursor-pointer hover:border-emerald-400\" onclick=\"showLogDetail('ORDER_WON')\">\n            <div class=\"flex justify-between items-center text-[10px]\">\n              <span class=\"text-emerald-400 font-black flex items-center gap-1\">\n                <span>\ud83c\udfaf</span> TAKE PROFIT HIT (+7.42)\n              </span>\n              <span class=\"text-neutral-500 font-mono\">03:00:42 UTC</span>\n            </div>\n            <p class=\"text-[11px] text-neutral-200 font-mono leading-tight\">\n              Order #20772889382 BUY 0.02 Lots at 4032.48 hit Target 4036.19 in 38s. Balance: $66.05.\n            </p>\n            <div class=\"flex justify-between items-center text-[9px] text-neutral-400 pt-1 border-t border-neutral-800\">\n              <span>Trigger: <b>Oversold M1 + 52% Hammer Wick</b></span>\n              <span class=\"text-cyan-400 underline\">Forensic Details &rarr;</span>\n            </div>\n          </div>\n        </div>\n\n      </div>\n\n      <!-- ========================================================================= -->\n      <!-- VIEW 4: ALL 14 QUANTITATIVE FILTERS (FULL REPLICA) -->\n      <!-- ========================================================================= -->\n      <div id=\"view-filters\" class=\"screen-view hidden flex-1 overflow-y-auto px-4 py-3 flex flex-col gap-3\">\n        \n        <div class=\"flex justify-between items-center pt-1\">\n          <div>\n            <h1 class=\"text-base font-extrabold text-white\">Quantitative Filters</h1>\n            <p class=\"text-[10px] text-neutral-400\">All 14 protection shields active on your account</p>\n          </div>\n          <span class=\"text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-extrabold\" id=\"filter-total-badge\">\n            10 Active / 4 Muted\n          </span>\n        </div>\n\n        <div class=\"bg-neutral-900 rounded-2xl border border-neutral-800 divide-y divide-neutral-800 overflow-hidden text-xs\">\n          <div class=\"p-2.5 flex justify-between items-center\">\n            <div>\n              <p class=\"font-bold text-white\">1. M15 Candle Guard</p>\n              <p class=\"text-[9px] text-neutral-400\">Prior candle expansion &amp; wick exhaustion check</p>\n            </div>\n            <input type=\"checkbox\" checked onchange=\"updateFilterCount()\" class=\"w-8 h-4 accent-emerald-500 rounded-full cursor-pointer\">\n          </div>\n          <div class=\"p-2.5 flex justify-between items-center\">\n            <div>\n              <p class=\"font-bold text-white\">2. $1.25 Tolerance Zone</p>\n              <p class=\"text-[9px] text-neutral-400\">Structural proximity zone before boundaries</p>\n            </div>\n            <input type=\"checkbox\" checked onchange=\"updateFilterCount()\" class=\"w-8 h-4 accent-emerald-500 rounded-full cursor-pointer\">\n          </div>\n          <div class=\"p-2.5 flex justify-between items-center\">\n            <div>\n              <p class=\"font-bold text-white\">3. Session Rollover Buffer</p>\n              <p class=\"text-[9px] text-neutral-400\">Blocks 4-6 PM EST &amp; London open volatility</p>\n            </div>\n            <input type=\"checkbox\" checked onchange=\"updateFilterCount()\" class=\"w-8 h-4 accent-emerald-500 rounded-full cursor-pointer\">\n          </div>\n          <div class=\"p-2.5 flex justify-between items-center\">\n            <div>\n              <p class=\"font-bold text-white\">4. Breakeven 65% Lock</p>\n              <p class=\"text-[9px] text-neutral-400\">Locks +$4.55 on $7 TP with trailing stop</p>\n            </div>\n            <input type=\"checkbox\" checked onchange=\"updateFilterCount()\" class=\"w-8 h-4 accent-emerald-500 rounded-full cursor-pointer\">\n          </div>\n          <div class=\"p-2.5 flex justify-between items-center\">\n            <div>\n              <p class=\"font-bold text-white\">5. Sub-$100 Base Lot Floor</p>\n              <p class=\"text-[9px] text-neutral-400\">0.02 Lot recovery floor</p>\n            </div>\n            <input type=\"checkbox\" checked onchange=\"updateFilterCount()\" class=\"w-8 h-4 accent-emerald-500 rounded-full cursor-pointer\">\n          </div>\n        </div>\n\n      </div>\n\n      <!-- NATIVE BOTTOM TAB BAR -->\n      <div class=\"relative w-full py-2 bg-neutral-950/95 backdrop-blur-md border-t border-neutral-900 flex justify-around items-center text-[10px]\">\n        <div onclick=\"switchScreen('chart')\" id=\"tab-chart\" class=\"flex flex-col items-center gap-0.5 cursor-pointer text-cyan-400\">\n          <span class=\"text-xs\">\u2728</span>\n          <span class=\"text-[9px] font-bold\">Chart</span>\n        </div>\n        <div onclick=\"switchScreen('telemetry')\" id=\"tab-telemetry\" class=\"flex flex-col items-center gap-0.5 cursor-pointer text-neutral-400 hover:text-white\">\n          <span class=\"text-xs\">\ud83e\udde0</span>\n          <span class=\"text-[9px] font-bold\">AI Brain</span>\n        </div>\n        <div onclick=\"switchScreen('logs')\" id=\"tab-logs\" class=\"flex flex-col items-center gap-0.5 cursor-pointer text-neutral-400 hover:text-white\">\n          <span class=\"text-xs\">\ud83d\udcdf</span>\n          <span class=\"text-[9px] font-bold\">Terminal</span>\n        </div>\n        <div onclick=\"switchScreen('filters')\" id=\"tab-filters\" class=\"flex flex-col items-center gap-0.5 cursor-pointer text-neutral-400 hover:text-white\">\n          <span class=\"text-xs\">\ud83d\udee1\ufe0f</span>\n          <span class=\"text-[9px] font-bold\">14 Filters</span>\n        </div>\n      </div>\n\n      <!-- Home Indicator Notch Bar -->\n      <div class=\"w-full pb-2 pt-1 flex justify-center bg-neutral-950\">\n        <div class=\"w-28 h-1 bg-white/40 rounded-full\"></div>\n      </div>\n\n    </div>\n  </div>\n\n  <!-- FORENSIC DETAIL MODAL -->\n  <div id=\"forensic-modal\" class=\"fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 hidden\">\n    <div class=\"bg-neutral-900 border border-neutral-700 w-full max-w-sm rounded-3xl p-4 shadow-2xl flex flex-col gap-3\">\n      <div class=\"flex justify-between items-center border-b border-neutral-800 pb-2\">\n        <h3 class=\"text-sm font-black text-white flex items-center gap-1.5\" id=\"modal-title\">\n          <span>\ud83d\udd0d</span> Guard Audit Forensic\n        </h3>\n        <button onclick=\"closeModal()\" class=\"w-6 h-6 rounded-full bg-neutral-800 text-neutral-400 hover:text-white flex items-center justify-center text-xs\">\u2715</button>\n      </div>\n      <div class=\"space-y-2 text-xs text-neutral-300 font-mono\" id=\"modal-body\"></div>\n      <button onclick=\"closeModal()\" class=\"w-full py-2 bg-blue-600 hover:bg-blue-500 rounded-xl text-white font-bold text-xs mt-1\">\n        Close Audit\n      </button>\n    </div>\n  </div>\n\n  <script>\n    // State\n    let isBotRunning = true;\n    let balance = 66.05;\n    let goldPrice = 4046.20;\n    let activeTool = \"cursor\";\n    let isIslandExpanded = false;\n    let showRays = true;\n    let candleSecondsRemaining = 24;\n    let currentChartMode = 'native';\n\n    // Switch between Inbuilt Candlestick Chart and TradingView Embed\n    function switchChartEngine(mode) {\n      currentChartMode = mode;\n      const nativeView = document.getElementById('native-chart-view');\n      const tvView = document.getElementById('tv-chart-view');\n      const btnNative = document.getElementById('btn-chart-native');\n      const btnTv = document.getElementById('btn-chart-tv');\n      const toolTitle = document.getElementById('tool-banner-title');\n\n      if (mode === 'tv') {\n        nativeView.classList.add('hidden');\n        tvView.classList.remove('hidden');\n        btnTv.className = 'px-2 py-0.5 rounded text-[9px] font-black bg-purple-600 text-white shadow-sm flex items-center gap-1 transition-all';\n        btnNative.className = 'px-2 py-0.5 rounded text-[9px] font-bold text-neutral-400 hover:text-white flex items-center gap-1 transition-all';\n        if (toolTitle) toolTitle.innerText = \"TRADINGVIEW ACTIVE\";\n      } else {\n        tvView.classList.add('hidden');\n        nativeView.classList.remove('hidden');\n        btnNative.className = 'px-2 py-0.5 rounded text-[9px] font-black bg-cyan-600 text-white shadow-sm flex items-center gap-1 transition-all';\n        btnTv.className = 'px-2 py-0.5 rounded text-[9px] font-bold text-neutral-400 hover:text-white flex items-center gap-1 transition-all';\n        if (toolTitle) toolTitle.innerText = \"TOOLS:\";\n        setTimeout(() => {\n          resizeCanvas();\n          drawTradingChart();\n        }, 50);\n      }\n    }\n\n    // Toggle Master Bot Running\n    function toggleBotEngine() {\n      isBotRunning = !isBotRunning;\n      const masterBtn = document.getElementById('master-bot-btn');\n      const dot = document.getElementById('bot-status-dot');\n      const title = document.getElementById('master-btn-title');\n      const sub = document.getElementById('master-btn-sub');\n      const badge = document.getElementById('master-btn-badge');\n      const islandLed = document.getElementById('island-led');\n      const islandCap = document.getElementById('island-caption');\n      const islandBadge = document.getElementById('island-badge');\n      const headerPulse = document.getElementById('header-pulse');\n\n      if (isBotRunning) {\n        masterBtn.className = \"w-full py-3 px-4 rounded-2xl font-black text-xs flex items-center justify-between transition-all duration-300 bot-glow-on bg-gradient-to-r from-emerald-600 via-teal-500 to-emerald-600 text-white active:scale-98 shadow-2xl border border-white/20\";\n        dot.className = \"w-3 h-3 rounded-full bg-white animate-ping\";\n        title.innerText = \"BOT ACTIVE & RUNNING\";\n        sub.innerText = \"M15 Guard & $1.25 Tolerance Zone Armed\";\n        badge.innerText = \"TAP TO PAUSE\";\n        islandLed.className = \"w-2 h-2 rounded-full bg-cyan-400 animate-pulse\";\n        islandCap.innerText = \"ZEN \u2022 ACTIVE\";\n        islandBadge.innerText = \"AI LIVE\";\n        headerPulse.className = \"w-3.5 h-3.5 rounded-full bg-cyan-400 animate-ping\";\n      } else {\n        masterBtn.className = \"w-full py-3 px-4 rounded-2xl font-black text-xs flex items-center justify-between transition-all duration-300 bot-glow-off bg-gradient-to-r from-red-600 via-rose-600 to-red-700 text-white active:scale-98 shadow-2xl border border-white/20\";\n        dot.className = \"w-3 h-3 rounded-full bg-white\";\n        title.innerText = \"BOT PAUSED & STOPPED\";\n        sub.innerText = \"Automated execution halted by user\";\n        badge.innerText = \"TAP TO START\";\n        islandLed.className = \"w-2 h-2 rounded-full bg-red-500\";\n        islandCap.innerText = \"BOT: PAUSED\";\n        islandBadge.innerText = \"PAUSED\";\n        headerPulse.className = \"w-3.5 h-3.5 rounded-full bg-red-500\";\n      }\n    }\n\n    // Screen Switcher\n    function switchScreen(viewId) {\n      document.querySelectorAll('.screen-view').forEach(el => el.classList.add('hidden'));\n      document.querySelectorAll('.screen-btn').forEach(btn => {\n        btn.classList.remove('bg-blue-600', 'text-white', 'shadow');\n        btn.classList.add('text-neutral-400');\n      });\n      document.querySelectorAll('[id^=\"tab-\"]').forEach(t => {\n        t.classList.remove('text-cyan-400');\n        t.classList.add('text-neutral-400');\n      });\n\n      document.getElementById('view-' + viewId).classList.remove('hidden');\n      const activeBtn = document.getElementById('btn-' + viewId);\n      if (activeBtn) {\n        activeBtn.classList.add('bg-blue-600', 'text-white', 'shadow');\n        activeBtn.classList.remove('text-neutral-400');\n      }\n      const activeTab = document.getElementById('tab-' + viewId);\n      if (activeTab) {\n        activeTab.classList.add('text-cyan-400');\n        activeTab.classList.remove('text-neutral-400');\n      }\n\n      if (viewId === 'chart') {\n        setTimeout(renderChart, 50);\n      }\n    }\n\n    // Canvas Chart Rendering\n    const canvas = document.getElementById('tradingCanvas');\n    const ctx = canvas.getContext('2d');\n\n    let drawings = [\n      { type: 'trendline', x1: 50, y1: 220, x2: 240, y2: 120, color: '#06B6D4' }\n    ];\n    let isDrawing = false;\n    let startPoint = null;\n\n    let candleData = [\n      { o: 4041.5, h: 4043.2, l: 4040.8, c: 4042.8 },\n      { o: 4042.8, h: 4044.6, l: 4042.1, c: 4044.1 },\n      { o: 4044.1, h: 4045.8, l: 4043.5, c: 4045.0 },\n      { o: 4045.0, h: 4045.2, l: 4043.2, c: 4043.6 },\n      { o: 4043.6, h: 4044.5, l: 4042.8, c: 4044.2 },\n      { o: 4044.2, h: 4047.0, l: 4043.8, c: 4046.8 },\n      { o: 4046.8, h: 4048.5, l: 4046.1, c: 4048.2 },\n      { o: 4048.2, h: 4048.8, l: 4046.9, c: 4047.4 },\n      { o: 4047.4, h: 4047.9, l: 4045.2, c: 4045.8 },\n      { o: 4045.8, h: 4046.8, l: 4045.4, c: 4046.2 }\n    ];\n\n    function resizeCanvas() {\n      const rect = canvas.getBoundingClientRect();\n      canvas.width = rect.width * window.devicePixelRatio;\n      canvas.height = rect.height * window.devicePixelRatio;\n      ctx.scale(window.devicePixelRatio, window.devicePixelRatio);\n    }\n\n    function renderChart() {\n      resizeCanvas();\n      const w = canvas.getBoundingClientRect().width;\n      const h = canvas.getBoundingClientRect().height;\n      ctx.clearRect(0, 0, w, h);\n\n      // 1. LIQUIDITY HEATMAP BANDS\n      const gradCeil = ctx.createLinearGradient(0, 50, 0, 90);\n      gradCeil.addColorStop(0, 'rgba(239, 68, 68, 0.22)');\n      gradCeil.addColorStop(1, 'rgba(239, 68, 68, 0.0)');\n      ctx.fillStyle = gradCeil;\n      ctx.fillRect(0, 50, w, 40);\n\n      const gradFloor = ctx.createLinearGradient(0, 220, 0, 260);\n      gradFloor.addColorStop(0, 'rgba(16, 185, 129, 0.0)');\n      gradFloor.addColorStop(1, 'rgba(16, 185, 129, 0.22)');\n      ctx.fillStyle = gradFloor;\n      ctx.fillRect(0, 220, w, 40);\n\n      // 2. High-Tech Grid Lines\n      ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)';\n      ctx.lineWidth = 1;\n      for (let y = 35; y < h; y += 40) {\n        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();\n      }\n      for (let x = 35; x < w; x += 50) {\n        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();\n      }\n\n      // 3. Smooth EMA 20 & 50 Wave\n      ctx.strokeStyle = '#06B6D4';\n      ctx.lineWidth = 2.5;\n      ctx.beginPath();\n      ctx.moveTo(20, 210);\n      ctx.bezierCurveTo(100, 160, 200, 130, w - 20, 95);\n      ctx.stroke();\n\n      ctx.strokeStyle = '#818CF8';\n      ctx.lineWidth = 2;\n      ctx.beginPath();\n      ctx.moveTo(20, 230);\n      ctx.bezierCurveTo(100, 190, 200, 155, w - 20, 120);\n      ctx.stroke();\n\n      // 4. Candlesticks (Prominently Centered)\n      const candleW = 12;\n      const spacing = 26;\n      const startX = 35;\n\n      candleData.forEach((c, idx) => {\n        const x = startX + (idx * spacing);\n        const isBull = c.c >= c.o;\n        const color = isBull ? '#10B981' : '#EF4444';\n\n        const yOpen = 250 - (c.o - 4040) * 22;\n        const yClose = 250 - (c.c - 4040) * 22;\n        const yHigh = 250 - (c.h - 4040) * 22;\n        const yLow = 250 - (c.l - 4040) * 22;\n\n        ctx.strokeStyle = color;\n        ctx.lineWidth = 1.5;\n        ctx.beginPath();\n        ctx.moveTo(x + candleW / 2, yHigh);\n        ctx.lineTo(x + candleW / 2, yLow);\n        ctx.stroke();\n\n        ctx.fillStyle = color;\n        const bodyTop = Math.min(yOpen, yClose);\n        const bodyHeight = Math.max(3, Math.abs(yClose - yOpen));\n        ctx.fillRect(x, bodyTop, candleW, bodyHeight);\n      });\n\n      // 5. Target TP / SL Rays\n      if (showRays) {\n        ctx.strokeStyle = '#10B981';\n        ctx.setLineDash([4, 4]);\n        ctx.beginPath(); ctx.moveTo(0, 75); ctx.lineTo(w, 75); ctx.stroke();\n        ctx.fillStyle = '#10B981';\n        ctx.font = 'bold 9px monospace';\n        ctx.fillText('TARGET TP +$7.00 ($4049.50)', 14, 70);\n\n        ctx.strokeStyle = '#EF4444';\n        ctx.beginPath(); ctx.moveTo(0, 245); ctx.lineTo(w, 245); ctx.stroke();\n        ctx.fillStyle = '#EF4444';\n        ctx.fillText('HARD STOP -$15.00 ($4038.50)', 14, 240);\n        ctx.setLineDash([]);\n      }\n\n      // 6. Drawings\n      drawings.forEach(d => {\n        ctx.strokeStyle = d.color;\n        ctx.lineWidth = 2;\n        ctx.beginPath();\n        if (d.type === 'trendline') {\n          ctx.moveTo(d.x1, d.y1);\n          ctx.lineTo(d.x2, d.y2);\n          ctx.stroke();\n        } else if (d.type === 'horizontal') {\n          ctx.moveTo(0, d.y);\n          ctx.lineTo(w, d.y);\n          ctx.stroke();\n        }\n      });\n    }\n\n    // Touch & Mouse Drawing\n    canvas.addEventListener('mousedown', (e) => {\n      const rect = canvas.getBoundingClientRect();\n      const pt = { x: e.clientX - rect.left, y: e.clientY - rect.top };\n      if (activeTool === 'trendline') {\n        isDrawing = true; startPoint = pt;\n      } else if (activeTool === 'horizontal') {\n        drawings.push({ type: 'horizontal', y: pt.y, color: '#F59E0B' });\n        renderChart();\n      }\n    });\n\n    canvas.addEventListener('mousemove', (e) => {\n      if (!isDrawing || activeTool !== 'trendline') return;\n      const rect = canvas.getBoundingClientRect();\n      const pt = { x: e.clientX - rect.left, y: e.clientY - rect.top };\n      renderChart();\n      ctx.strokeStyle = '#38BDF8';\n      ctx.lineWidth = 2;\n      ctx.setLineDash([2, 2]);\n      ctx.beginPath();\n      ctx.moveTo(startPoint.x, startPoint.y);\n      ctx.lineTo(pt.x, pt.y);\n      ctx.stroke();\n      ctx.setLineDash([]);\n    });\n\n    canvas.addEventListener('mouseup', (e) => {\n      if (!isDrawing || activeTool !== 'trendline') return;\n      const rect = canvas.getBoundingClientRect();\n      const pt = { x: e.clientX - rect.left, y: e.clientY - rect.top };\n      drawings.push({ type: 'trendline', x1: startPoint.x, y1: startPoint.y, x2: pt.x, y2: pt.y, color: '#38BDF8' });\n      isDrawing = false;\n      renderChart();\n    });\n\n    function setTool(tool) {\n      activeTool = tool;\n      document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('bg-cyan-500', 'text-white'));\n      const b = document.getElementById('tool-' + tool);\n      if (b) b.classList.add('bg-cyan-500', 'text-white');\n      if (tool === 'rays') { showRays = !showRays; renderChart(); }\n    }\n\n    function clearDrawings() { drawings = []; renderChart(); }\n    function executeFlatten() { alert(\"Emergency Flatten Executed. All positions closed flat.\"); }\n\n    // Forensic Modal Database\n    const logDetails = {\n      'M15_GUARD_BLOCK': {\n        title: 'M15 Momentum Guard Audit',\n        content: `\n          <div class=\"p-2 bg-black/60 rounded-xl border border-red-500/30\">\n            <span class=\"text-red-400 font-bold block mb-1\">DECISION: SELL ORDER STRICTLY BLOCKED</span>\n            <p class=\"text-neutral-400 text-[11px]\">Timestamp: 05:34:12 UTC | Price: $4047.84</p>\n          </div>\n          <div class=\"space-y-1 text-[11px]\">\n            <p><b>Prior M15 Candle:</b> Rose +$2.63 (4035.77 &rarr; 4038.68)</p>\n            <p><b>Upper Wick Formed:</b> Only $0.35 (&lt; 1.2x Body required)</p>\n            <p><b>Rule Applied:</b> Blind short prevention into active Asian impulse wave.</p>\n            <p class=\"text-emerald-400\"><b>Outcome:</b> Gold surged to $4050.11. The block saved -$8.82 in floating drawdown.</p>\n          </div>\n        `\n      },\n      'SESSION_BUFFER': {\n        title: 'Session Rollover Buffer Audit',\n        content: `\n          <div class=\"p-2 bg-black/60 rounded-xl border border-purple-500/30\">\n            <span class=\"text-purple-400 font-bold block mb-1\">DECISION: SPREAD SPIKE SHIELD ACTIVE</span>\n            <p class=\"text-neutral-400 text-[11px]\">Window: 05:00 - 06:00 UTC (London Pre-Open)</p>\n          </div>\n          <div class=\"space-y-1 text-[11px]\">\n            <p><b>Reason:</b> Institutional liquidity transition between Asian close and European pre-open.</p>\n            <p><b>Broker Spreads:</b> Prone to sudden 3x widening spikes.</p>\n            <p class=\"text-purple-300\"><b>Protection:</b> All 14 DCA triggers temporarily gated.</p>\n          </div>\n        `\n      },\n      'ORDER_WON': {\n        title: 'Take Profit Execution Audit',\n        content: `\n          <div class=\"p-2 bg-black/60 rounded-xl border border-emerald-500/30\">\n            <span class=\"text-emerald-400 font-bold block mb-1\">DECISION: FULL TAKE PROFIT REACHED</span>\n            <p class=\"text-neutral-400 text-[11px]\">Ticket: #20772889382 | Time: 03:00:42 UTC</p>\n          </div>\n          <div class=\"space-y-1 text-[11px]\">\n            <p><b>Entry:</b> BUY 0.02 Lots at 4032.48</p>\n            <p><b>Exit:</b> 4036.19 (+$3.71 / ounce move)</p>\n            <p><b>Net Profit:</b> +$7.42 USD in 38 seconds</p>\n            <p><b>Trigger Logic:</b> Rejection off 4031.50 swing floor with 52% hammer wick.</p>\n          </div>\n        `\n      }\n    };\n\n    function showLogDetail(id) {\n      const data = logDetails[id];\n      if (!data) return;\n      document.getElementById('modal-title').innerHTML = `<span>\ud83d\udd0d</span> ${data.title}`;\n      document.getElementById('modal-body').innerHTML = data.content;\n      document.getElementById('forensic-modal').classList.remove('hidden');\n    }\n\n    function closeModal() { document.getElementById('forensic-modal').classList.add('hidden'); }\n\n    // Live clock\n    setInterval(() => {\n      const d = new Date();\n      let h = d.getHours();\n      let m = d.getMinutes();\n      document.getElementById('phone-clock').innerText = h + ':' + (m < 10 ? '0' + m : m);\n    }, 1000);\n\n    window.addEventListener('resize', renderChart);\n    window.addEventListener('load', renderChart);\n  </script>\n</body>\n</html>\n";
 
 export default function App() {
-  const [balance, setBalance] = useState(66.05);
-  const [goldPrice, setGoldPrice] = useState(4046.20);
-  const [pnl, setPnl] = useState(0.00);
-  const [basketCount, setBasketCount] = useState(0);
-
-  // Filter toggles
-  const [m15Guard, setM15Guard] = useState(true);
-  const [toleranceZone, setToleranceZone] = useState(true);
-  const [sessionBuffer, setSessionBuffer] = useState(true);
-  const [compounding, setCompounding] = useState(true);
-
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" />
-      
-      {/* Header Bar */}
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.headerTitle}>QUANT TRADER PRO</Text>
-          <Text style={styles.headerSubtitle}>HFMarkets Live 17 • Account #211219636</Text>
-        </View>
-        <View style={styles.badge}>
-          <Text style={styles.badgeText}>AUTO HEALING</Text>
-        </View>
-      </View>
-
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        
-        {/* Dynamic Island Style Live PnL Card */}
-        <View style={styles.balanceCard}>
-          <Text style={styles.cardLabel}>ACCOUNT EQUITY</Text>
-          <Text style={styles.balanceText}>${balance.toFixed(2)}</Text>
-          
-          <View style={styles.divider} />
-          
-          <View style={styles.statsRow}>
-            <View>
-              <Text style={styles.subStatLabel}>GOLD SPOT (XAUUSD)</Text>
-              <Text style={styles.subStatValue}>${goldPrice.toFixed(2)}</Text>
-            </View>
-            <View style={{ alignItems: 'flex-end' }}>
-              <Text style={styles.subStatLabel}>ACTIVE FLOAT</Text>
-              <Text style={[styles.subStatValue, { color: pnl >= 0 ? '#10B981' : '#EF4444' }]}>
-                {pnl >= 0 ? `+$${pnl.toFixed(2)}` : `-$${Math.abs(pnl).toFixed(2)}`}
-              </Text>
-            </View>
-          </View>
-        </View>
-
-        {/* Active Basket HUD */}
-        <View style={styles.section}>
-          <Text style={styles.sectionHeader}>ACTIVE BASKET EXECUTION</Text>
-          <View style={styles.card}>
-            <View style={styles.rowBetween}>
-              <Text style={styles.cardTitle}>Running Layers</Text>
-              <Text style={styles.highlightVal}>{basketCount} of 4 Max</Text>
-            </View>
-            <Text style={styles.cardDesc}>
-              {basketCount === 0 
-                ? "Standing by. Guards scanning for London Open momentum."
-                : "Layer 1 active. Dynamic step arming trailing lock."}
-            </Text>
-            
-            <TouchableOpacity style={styles.flattenBtn} activeOpacity={0.8}>
-              <Text style={styles.flattenBtnText}>EMERGENCY FLATTEN BASKET</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* Core Safeguards Toggles */}
-        <View style={styles.section}>
-          <Text style={styles.sectionHeader}>QUANT SAFEGUARDS & GUARDS</Text>
-          <View style={styles.cardGroup}>
-            
-            <View style={styles.toggleRow}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.toggleTitle}>M15 Candle Guard</Text>
-                <Text style={styles.toggleSub}>Blocks entries into opposing candle momentum</Text>
-              </View>
-              <Switch 
-                value={m15Guard} 
-                onValueChange={setM15Guard}
-                trackColor={{ false: '#27272a', true: '#10B981' }}
-                thumbColor="#FFFFFF"
-              />
-            </View>
-
-            <View style={styles.separator} />
-
-            <View style={styles.toggleRow}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.toggleTitle}>$1.25 Tolerance Zone</Text>
-                <Text style={styles.toggleSub}>Enforces structural proximity buffer</Text>
-              </View>
-              <Switch 
-                value={toleranceZone} 
-                onValueChange={setToleranceZone}
-                trackColor={{ false: '#27272a', true: '#10B981' }}
-                thumbColor="#FFFFFF"
-              />
-            </View>
-
-            <View style={styles.separator} />
-
-            <View style={styles.toggleRow}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.toggleTitle}>Session Rollover Buffer</Text>
-                <Text style={styles.toggleSub}>Protects 4-6 PM EST & London fixes</Text>
-              </View>
-              <Switch 
-                value={sessionBuffer} 
-                onValueChange={setSessionBuffer}
-                trackColor={{ false: '#27272a', true: '#10B981' }}
-                thumbColor="#FFFFFF"
-              />
-            </View>
-
-            <View style={styles.separator} />
-
-            <View style={styles.toggleRow}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.toggleTitle}>Dynamic Auto-Compounding</Text>
-                <Text style={styles.toggleSub}>Sub-$100 floor (0.02 base lots, max 5.0)</Text>
-              </View>
-              <Switch 
-                value={compounding} 
-                onValueChange={setCompounding}
-                trackColor={{ false: '#27272a', true: '#10B981' }}
-                thumbColor="#FFFFFF"
-              />
-            </View>
-
-          </View>
-        </View>
-
-      </ScrollView>
+      <StatusBar barStyle="light-content" backgroundColor="#050507" />
+      <WebView
+        source={{ html: HTML_CONTENT }}
+        style={styles.webview}
+        javaScriptEnabled={true}
+        domStorageEnabled={true}
+        originWhitelist={['*']}
+        allowsInlineMediaPlayback={true}
+        mixedContentMode="always"
+        scrollEnabled={false}
+        bounces={false}
+      />
     </SafeAreaView>
   );
 }
@@ -147,166 +26,11 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#09090b',
+    backgroundColor: '#050507',
+    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
   },
-  header: {
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    borderBottomWidth: 1,
-    borderBottomColor: '#18181b',
+  webview: {
+    flex: 1,
+    backgroundColor: '#050507',
   },
-  headerTitle: {
-    color: '#FAFAFA',
-    fontSize: 16,
-    fontWeight: '800',
-    letterSpacing: 0.5,
-  },
-  headerSubtitle: {
-    color: '#71717A',
-    fontSize: 11,
-    marginTop: 2,
-  },
-  badge: {
-    backgroundColor: 'rgba(16, 185, 129, 0.15)',
-    borderColor: 'rgba(16, 185, 129, 0.4)',
-    borderWidth: 1,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
-  },
-  badgeText: {
-    color: '#10B981',
-    fontSize: 10,
-    fontWeight: '700',
-  },
-  scrollContent: {
-    padding: 16,
-    paddingBottom: 40,
-  },
-  balanceCard: {
-    backgroundColor: '#18181b',
-    borderRadius: 24,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: '#27272a',
-    shadowColor: '#000',
-    shadowOpacity: 0.4,
-    shadowRadius: 10,
-    marginBottom: 20,
-  },
-  cardLabel: {
-    color: '#A1A1AA',
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 0.5,
-  },
-  balanceText: {
-    color: '#FAFAFA',
-    fontSize: 32,
-    fontWeight: '900',
-    marginTop: 4,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: '#27272a',
-    marginVertical: 16,
-  },
-  statsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  subStatLabel: {
-    color: '#71717A',
-    fontSize: 10,
-    fontWeight: '600',
-  },
-  subStatValue: {
-    color: '#FAFAFA',
-    fontSize: 16,
-    fontWeight: '800',
-    marginTop: 2,
-  },
-  section: {
-    marginBottom: 20,
-  },
-  sectionHeader: {
-    color: '#71717A',
-    fontSize: 11,
-    fontWeight: '800',
-    letterSpacing: 0.8,
-    marginBottom: 8,
-    marginLeft: 4,
-  },
-  card: {
-    backgroundColor: '#18181b',
-    borderRadius: 20,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#27272a',
-  },
-  cardTitle: {
-    color: '#FAFAFA',
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  highlightVal: {
-    color: '#10B981',
-    fontSize: 14,
-    fontWeight: '800',
-  },
-  cardDesc: {
-    color: '#A1A1AA',
-    fontSize: 12,
-    marginTop: 6,
-    lineHeight: 16,
-  },
-  flattenBtn: {
-    backgroundColor: '#EF4444',
-    borderRadius: 12,
-    paddingVertical: 12,
-    alignItems: 'center',
-    marginTop: 14,
-  },
-  flattenBtnText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '800',
-    letterSpacing: 0.5,
-  },
-  cardGroup: {
-    backgroundColor: '#18181b',
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: '#27272a',
-    overflow: 'hidden',
-  },
-  toggleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 16,
-  },
-  toggleTitle: {
-    color: '#FAFAFA',
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  toggleSub: {
-    color: '#71717A',
-    fontSize: 10,
-    marginTop: 2,
-  },
-  separator: {
-    height: 1,
-    backgroundColor: '#27272a',
-    marginLeft: 16,
-  },
-  rowBetween: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  }
 });
